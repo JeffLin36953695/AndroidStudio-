@@ -1,0 +1,44 @@
+🧩 問題大綱：BottomSheetDialogFragment 疊加 DialogFragment 出現黑條
+💥 問題現象
+使用 BottomSheetDialogFragment 顯示底部對話框。
+
+此時若再顯示 DialogFragment（如警示視窗），畫面會：
+
+底部出現短暫黑條（Navigation Bar 區域）
+
+BottomSheet 高度縮小
+
+Dialog 消失後，BottomSheet 高度回彈，同樣會閃爍黑條。
+
+🔍 原因分析
+WindowInsets 重新計算
+
+顯示新 Dialog 時，Android 系統會調整 Insets（如鍵盤高度、狀態列、導航列等），導致 UI 元素重新 layout。
+
+對於 BottomSheetDialogFragment，這會觸發它根據新可視高度縮小，造成 layout 高度變動。
+
+SoftInputMode 預設為 ADJUST_RESIZE 或 ADJUST_PAN
+
+系統預設會根據鍵盤或視窗顯示調整 layout，這使 BottomSheet 的大小會被動態調整。
+
+透明背景或動畫延遲導致黑條可見
+
+Dialog 背景設定為透明時，動畫顯示期間可能露出底層 Navigation Bar 區域，導致黑條閃爍。
+
+✅ 解決方法
+設定 SoftInputMode 為 SOFT_INPUT_ADJUST_NOTHING
+@Override
+public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setStyle(STYLE_NO_TITLE, R.style.BottomDialogTheme);
+}
+
+@Override
+public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+
+    Dialog dialog = getDialog();
+    if (dialog != null && dialog.getWindow() != null) {
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
+    }
+}
